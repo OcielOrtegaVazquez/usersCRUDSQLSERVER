@@ -1,21 +1,26 @@
-const express = require('express');
+const express = require("express");
 const app = express();
-let ambito = "HTTPS_REVECO"
+let ambito = "HTTPS_REVECO";
 let versionMSSQLFGR = "0.0.2";
-const sql = require('mssql')
-var https = require('https');
-const config = require('./dbconfig.js');
+const sql = require("mssql");
+var https = require("https");
+const config = require("./config/dbconfig.js");
 const router = express.Router();
-var fs = require('fs'); //--> Crear directorio
-const PORT = 3000
-var bodyParser = require('body-parser');
-
+var fs = require("fs"); //--> Crear directorio
+const PORT = 3000;
+var bodyParser = require("body-parser");
+const cors = require("cors");
+const jwt = require('jsonwebtoken');
 
 /* Importar dbuser */
-const dbuser = require('./dbUser');
-const { user } = require('./dbconfig.js');
-app.use(bodyParser.urlencoded({ extended: true }));
+const dbuser = require("./controllers/dbUser");
+const dbCarpetaInvestigacion = require('./controllers/dbCarpetaInvestigacion');
+
 app.use(bodyParser.json());
+
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
+app.use(cors());
 
 /* Mostramos un mensaje de Success en consola */
 sql.connect(config, (err) => {
@@ -37,80 +42,172 @@ if (ambito.indexOf("HTTPS") > -1) {
     var auxKey = "reveco.fgr.org.mx.key";
     if (ambito.indexOf("LOCAL") > -1) {
         auxCer = "server.cer";
-        auxKey = "server.key"
+        auxKey = "server.key";
     }
-    https.createServer({
-        //--> ***HTTPS
-        cert: fs.readFileSync('cert/' + auxCer),
-        //--> ***HTTPS
-        key: fs.readFileSync('cert/' + auxKey)
-    }, app).listen(PORT, function() {
-        console.log("MSSQL-FGR versión: " + infoVer());
-        console.log("HTTPS: > " + auxCer);
-        console.log('Express-> Listening on ' + PORT);
-        console.log(infoDB());
-    });
+    https
+        .createServer({
+                //--> ***HTTPS
+                cert: fs.readFileSync("cert/" + auxCer),
+                //--> ***HTTPS
+                key: fs.readFileSync("cert/" + auxKey),
+            },
+            app
+        )
+        .listen(PORT, function() {
+            console.log("MSSQL-FGR versión: " + infoVer());
+            console.log("HTTPS: > " + auxCer);
+            console.log("Express-> Listening on " + PORT);
+            console.log(infoDB());
+        });
 } else {
     app.listen(PORT, function() {
         console.log("MSSQL-FGR versión: " + infoVer());
-        console.log('Express-> Listening on ' + PORT);
+        console.log("Express-> Listening on " + PORT);
         console.log(infoDB());
     });
 }
 
-sql.on('error', err => {
+sql.on("error", (err) => {
     console.log("ERROR: ");
     console.log(err);
-})
+});
 
 function infoVer() {
     return versionMSSQLFGR;
 }
 
 function infoDB() {
-    return "DB: " + config.server + ">" + config.database
+    return "DB: " + config.server + ">" + config.database;
 }
 
+/* --------- HTTPS ------------- */
 
+/* ------------------------------ */
+const configC = require("./config/config");
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
+app.use(cors(configC.server));
+
+/* --------- HTTPS ------------- */
+app.use(function(req, res, next) {
+    res.header("Access-Control-Allow-Credentials", true);
+    res.header("Access-Control-Allow-Origin", "*");
+    res.header(
+        "Access-Control-Allow-Headers",
+        "Authorization, X-API-KEY, Origin, X-Requested-With, Content-Type, Accept, Access-Control-Allow-Request-Method"
+    );
+    res.header("Access-Control-Allow-Methods", "GET, POST, OPTIONS, PUT, DELETE");
+    res.header("Allow", "GET, POST, OPTIONS, PUT, DELETE");
+    next();
+});
+
+/* -------------------------            key          ----------------------------- */
+app.set("key", config.key);
 
 /* ------------------------- Creacion de Rutas HTTPS ----------------------------- */
 
-/* Ruta principal */
-app.use('/admin', router);
+/* ---------------------------- Ruta principal ----------------------------------- */
+app.use("/admin", router);
+
+/* ------------------------------------------------------------------------------- */
+/* ------------------------- Creacion de Rutas Users ----------------------------- */
+/* ------------------------------------------------------------------------------- */
+
 
 /* Obtenermos todos los usuarios */
-router.route('/users').get((req, res) => {
-    dbuser.getUsers().then(users => {
+router.route("/users").get((req, res) => {
+    dbuser.getUsers().then((users) => {
         res.json({ users });
     });
 });
 
 /* Obtenemos 1 usuario */
-router.route('/users/:id').get((req, res) => {
-    dbuser.getUserId(req.params.id).then(user => {
+router.route("/users/:id").get((req, res) => {
+    dbuser.getUserId(req.params.id).then((user) => {
         res.json({ user });
     });
 });
 
 /* Insertamos 1 usuario nuevo */
-router.route('/new').post((req, res) => {
-    let insertUser = {...req.body };
-    dbuser.insertUser(insertUser).then(user => {
+router.route("/users").post((req, res) => {
+    const insertUser = {...req.body };
+    dbuser.insertUser(insertUser).then((user) => {
+        res.setHeader("Content-Type", "application/json");
         res.json({ user });
     });
 });
 
 /* Actualizar usuario */
-router.route('/update').put((req, res) => {
-    let updateUser = {...req.body };
-    dbuser.updateUser(updateUser).then(user => {
+router.route("/update").put((req, res) => {
+    const updateUser = {...req.body };
+    dbuser.updateUser(updateUser).then((user) => {
         res.json({ user });
     });
 });
 
 /* Borrar Usuario */
-router.route('/delete/:id').delete((req, res) => {
-    dbuser.deleteUser(req.params.id).then(user => {
+router.route("/users/:id").delete((req, res) => {
+    dbuser.deleteUser(req.params.id).then((user) => {
         res.json({ user });
+    });
+});
+
+/* Login Usuario */
+router.route("/users/login").post((req, res) => {
+    const userLogin = {...req.body };
+    console.log(req.body);
+    console.log(`Usuario: ${userLogin.username} Intentando Conectar a la DB...`);
+    dbuser.loginUser(userLogin).then((user) => {
+        res.setHeader("Content-Type", "application/json");
+        if (res) {
+            let dataUser = JSON.stringify(user);
+            //console.log("usuario base:  " + user[0].username);
+            //console.log("usuario role:  " + user[0].role);
+            const token = jwt.sign({ exp: Math.floor(Date.now() / 1000) + 60 * 60, data: dataUser }, '@FgR@c0M@0rG@mX-Si3R!');
+            res.json(token);
+            console.log(token);
+        } else {
+            res.json('usuario incorrecto');
+        }
+    });
+});
+
+
+/* ------------------------------------------------------------------------------- */
+/* --------------- Creacion de Rutas Carpetas de Investigacion ------------------- */
+/* ------------------------------------------------------------------------------- */
+
+/* Obtenermos todos los usuarios */
+router.route("/users").get((req, res) => {
+    dbuser.getUsers().then((users) => {
+        res.json({ users });
+    });
+});
+
+/* Obtenemos todas las carpetas de investigacion del 2019 */
+router.route("/carpetas2019").get((req, res) => {
+    dbCarpetaInvestigacion.getCarpetasInvestigacion2019().then((carpetas2019) => {
+        res.json({ carpetas2019 });
+    });
+});
+
+/* Obtenemos todas las carpetas de investigacion del 2020 */
+router.route("/carpetas2020").get((req, res) => {
+    dbCarpetaInvestigacion.getCarpetasInvestigacion2020().then((carpetas2020) => {
+        res.json({ carpetas2020 });
+    });
+});
+
+/* Obtenemos todas las capetas de investigacion del 2021 */
+router.route("/carpetas2021").get((req, res) => {
+    dbCarpetaInvestigacion.getCarpetasInvestigacion2021().then((carpetas2021) => {
+        res.json({ carpetas2021 });
+    });
+});
+
+/* Obtenemos todas las carpetas de investigacion del 2022 */
+router.route("/carpetas2022").get((req, res) => {
+    dbCarpetaInvestigacion.getCarpetasInvestigacion2022().then((carpetas2022) => {
+        res.json({ carpetas2022 })
     });
 });

@@ -10,3 +10,5 @@ class User {
         this.cargo = cargo;
     }
 }
+
+module.exports = User;
