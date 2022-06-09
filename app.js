@@ -15,6 +15,7 @@ const jwt = require('jsonwebtoken');
 /* Importar dbuser */
 const dbuser = require("./controllers/dbUser");
 const dbCarpetaInvestigacion = require('./controllers/dbCarpetaInvestigacion');
+const dbCMI = require("./controllers/dbcmi");
 
 app.use(bodyParser.json());
 
@@ -187,27 +188,47 @@ router.route("/users").get((req, res) => {
 /* Obtenemos todas las carpetas de investigacion del 2019 */
 router.route("/carpetas2019").get((req, res) => {
     dbCarpetaInvestigacion.getCarpetasInvestigacion2019().then((carpetas2019) => {
-        res.json({ carpetas2019 });
+        res.json(carpetas2019);
     });
 });
 
 /* Obtenemos todas las carpetas de investigacion del 2020 */
 router.route("/carpetas2020").get((req, res) => {
     dbCarpetaInvestigacion.getCarpetasInvestigacion2020().then((carpetas2020) => {
-        res.json({ carpetas2020 });
+        res.json(carpetas2020);
     });
 });
 
 /* Obtenemos todas las capetas de investigacion del 2021 */
 router.route("/carpetas2021").get((req, res) => {
     dbCarpetaInvestigacion.getCarpetasInvestigacion2021().then((carpetas2021) => {
-        res.json({ carpetas2021 });
+        res.json(carpetas2021);
     });
 });
 
 /* Obtenemos todas las carpetas de investigacion del 2022 */
 router.route("/carpetas2022").get((req, res) => {
     dbCarpetaInvestigacion.getCarpetasInvestigacion2022().then((carpetas2022) => {
-        res.json({ carpetas2022 })
+        res.json(carpetas2022)
+    });
+});
+
+/* ------------------------------------------------------------------------------- */
+/* ------------------------------- Reportes CMI ---------------------------------- */
+/* ------------------------------------------------------------------------------- */
+
+/* Obtenemos todos los registros de CMI_CENAPI */
+router.route("/reporteCENAPI").get((req, res) => {
+    dbCMI.getAllCenapi().then((reporteCenapi) => {
+        res.json(reporteCenapi);
+    });
+});
+
+/* Obtener el reporte de CMI_CENAPI entre rango de dás */
+router.route("/reporteCENAPI/rango").post((req, res) => {
+    const rango = {...req.body };
+    dbCMI.getReporteCenapi(rango).then((reporteCENAPIRango) => {
+        res.setHeader("Content-Type", "application/json");
+        res.json(reporteCENAPIRango);
     });
 });
