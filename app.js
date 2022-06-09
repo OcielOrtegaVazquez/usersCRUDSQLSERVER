@@ -110,6 +110,7 @@ app.set("key", config.key);
 /* ---------------------------- Ruta principal ----------------------------------- */
 app.use("/admin", router);
 
+
 /* ------------------------------------------------------------------------------- */
 /* ------------------------- Creacion de Rutas Users ----------------------------- */
 /* ------------------------------------------------------------------------------- */
@@ -217,9 +218,13 @@ router.route("/carpetas2022").get((req, res) => {
 /* ------------------------------- Reportes CMI ---------------------------------- */
 /* ------------------------------------------------------------------------------- */
 
+
+/* ------------------------------- CENAPI ---------------------------------- */
+
 /* Obtenemos todos los registros de CMI_CENAPI */
 router.route("/reporteCENAPI").get((req, res) => {
     dbCMI.getAllCenapi().then((reporteCenapi) => {
+        res.setHeader("Content-Type", "application/json");
         res.json(reporteCenapi);
     });
 });
@@ -230,5 +235,69 @@ router.route("/reporteCENAPI/rango").post((req, res) => {
     dbCMI.getReporteCenapi(rango).then((reporteCENAPIRango) => {
         res.setHeader("Content-Type", "application/json");
         res.json(reporteCENAPIRango);
+        console.log("Se Encontraron: " + reporteCENAPIRango.length + " Registros de CMI_CENAPI");
+    });
+});
+
+
+/* ------------------------------- CGSP ---------------------------------- */
+
+/* Obtener todos los registros de CMI_CGSP */
+router.route("/reporteCGSP").get((req, res) => {
+    dbCMI.getAllCGSP().then((reporteCGSP) => {
+        res.setHeader("Content-Type", "application/json");
+        res.json(reporteCGSP);
+    });
+});
+
+/* Obtener el reporte de CMI_CGSP entre un rango de dias */
+router.route("/reporteCGSP/rango").post((req, res) => {
+    const rango = {...req.body };
+    dbCMI.getReporteCgsp(rango).then((reporteCGSPRango) => {
+        res.setHeader("Content-Type", "application/json");
+        res.json(reporteCGSPRango);
+        console.log("Se encontraron: " + reporteCGSPRango.length + " Registros de CMI_CGSP");
+    });
+});
+
+
+/* ------------------------------- PFM_MM ---------------------------------- */
+
+/* Obtenemos todos los registros de PFM_MM */
+router.route("/reportePFM_MM").get((req, res) => {
+    dbCMI.getAllPFM_MM().then((reportePFM_MM) => {
+        res.setHeader("Content-Type", "application/json");
+        res.json(reportePFM_MM);
+    });
+});
+
+/* Obtener el reporte de CMI_PFM_MM entre un rango de dias */
+router.route("/reportePFM_MM/rango").post((req, res) => {
+    const rango = {...req.body };
+    dbCMI.getReportePFM_MM(rango).then((reportePFM_MMRango) => {
+        res.setHeader("Content-Type", "application/json");
+        res.json(reportePFM_MMRango);
+        console.log("Se encontraron: " + reportePFM_MMRango.length + " Registros de CMI_PFM_MM");
+    });
+});
+
+
+/* ------------------------------- PFM_MJ ---------------------------------- */
+
+/* Obtenemos todos los registros de PFM_MJ */
+router.route("/reportePFM_MJ").get((req, res) => {
+    dbCMI.getAllPFM_MM().then((reportePFM_MJ) => {
+        res.setHeader("Content-Type", "application/json");
+        res.json(reportePFM_MJ);
+    });
+});
+
+/* Obtener el reporte de CMI_PFM_MJ entre un rango de dias */
+router.route("/reportePFM_MJ/rango").post((req, res) => {
+    const rango = {...req.body };
+    dbCMI.getReportePFM_MJ(rango).then((reportePFM_MJRango) => {
+        res.setHeader("Content-Type", "application/json");
+        res.json(reportePFM_MJRango);
+        console.log("Se encontraron: " + reportePFM_MJRango.length + " Registros de CMI_PF_MJ");
     });
 });
