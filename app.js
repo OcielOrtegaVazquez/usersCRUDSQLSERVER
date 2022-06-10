@@ -229,7 +229,7 @@ router.route("/reporteCENAPI").get((req, res) => {
     });
 });
 
-/* Obtener el reporte de CMI_CENAPI entre rango de dás */
+/* Obtener el reporte de CMI_CENAPI entre rango de días */
 router.route("/reporteCENAPI/rango").post((req, res) => {
     const rango = {...req.body };
     dbCMI.getReporteCenapi(rango).then((reporteCENAPIRango) => {

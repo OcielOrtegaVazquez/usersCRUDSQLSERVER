@@ -26,7 +26,6 @@ async function getAllCenapi() {
 }
 
 /* GET Reporte entre 2 fechas CMI_CENAPI */
-
 async function getReporteCenapi(rango) {
     try {
         let pool = await sql.connect(config);
