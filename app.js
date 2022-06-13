@@ -12,10 +12,11 @@ var bodyParser = require("body-parser");
 const cors = require("cors");
 const jwt = require('jsonwebtoken');
 
-/* Importar dbuser */
+/* Importar DB */
 const dbuser = require("./controllers/dbUser");
 const dbCarpetaInvestigacion = require('./controllers/dbCarpetaInvestigacion');
 const dbCMI = require("./controllers/dbcmi");
+const dbCatalogos = require("./controllers/dbCatalogos");
 
 app.use(bodyParser.json());
 
@@ -85,6 +86,8 @@ function infoDB() {
 
 /* ------------------------------ */
 const configC = require("./config/config");
+const dbPlanInvestigacion = require("./controllers/dbPlanInvestigacion.js");
+const { getJerarquiaMP } = require("./controllers/dbPlanInvestigacion.js");
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 app.use(cors(configC.server));
@@ -299,5 +302,67 @@ router.route("/reportePFM_MJ/rango").post((req, res) => {
         res.setHeader("Content-Type", "application/json");
         res.json(reportePFM_MJRango);
         console.log("Se encontraron: " + reportePFM_MJRango.length + " Registros de CMI_PF_MJ");
+    });
+});
+
+
+/* ------------------------------------------------------------------------------ */
+/* -------------------------------- CATALOGOS ----------------------------------- */
+/* ------------------------------------------------------------------------------ */
+
+/* Catalogo de Unidades */
+router.route("/catUnidades").get((req, res) => {
+    dbCatalogos.getCatUnidades().then((catUnidades) => {
+        res.setHeader("Content-Type", "application/json");
+        res.json(catUnidades);
+    });
+});
+
+/* Catalogo de Estados */
+router.route("/catEstados").get((req, res) => {
+    dbCatalogos.getCatEstados().then((catEstados) => {
+        res.setHeader("Content-Type", "application/json");
+        res.json(catEstados);
+    });
+});
+
+
+/* ------------------------------------------------------------------------------ */
+/* ------------------------- Planes de Investigacion ---------------------------- */
+/* ------------------------------------------------------------------------------ */
+
+/* Obtener todos planes de invetigacion */
+router.route("/planesInvestigacion").get((req, res) => {
+    dbPlanInvestigacion.getAllPlanesInvestigacion().then((planesInvestigacion) => {
+        res.setHeader("Content-Type", "application/json");
+        res.json(planesInvestigacion);
+    });
+});
+
+/* Obtener plan de investigacion por numero de carpeta */
+router.route("/planInvestigacion/carpeta").post((req, res) => {
+    const numCarpeta = {...req.body };
+    dbPlanInvestigacion.getPlanInvestigacion(numCarpeta).then((planInvestigacion) => {
+        res.setHeader("Content-Type", "application/json");
+        res.json(planInvestigacion);
+        console.log(planInvestigacion);
+    });
+});
+
+/* Obtener diligencias asignadad a carpeta */
+router.route("/planDiligenciaCi/carpeta").post((req, res) => {
+    const numCarpeta = {...req.body };
+    dbPlanInvestigacion.getPlanDiligencia(numCarpeta).then((diligencia) => {
+        res.setHeader("Content-Type", "application/json");
+        res.json(diligencia);
+        console.log(diligencia);
+    });
+});
+
+/* Obtener la jerarquia de MP */
+router.route("/mpEstructura/:id").get((req, res) => {
+    dbPlanInvestigacion.getJerarquiaMP(req.params.id).then((getJerarquiaMP) => {
+        res.setHeader("Content-Type", "application/json");
+        res.json(getJerarquiaMP);
     });
 });
