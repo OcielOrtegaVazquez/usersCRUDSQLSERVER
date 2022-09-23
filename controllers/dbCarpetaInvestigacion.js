@@ -13,7 +13,7 @@ const carpetaInvestigacion = require('../models/carpetaInvestigacion.js');
 async function getCarpetasInvestigacion2019() {
     try {
         let pool = await sql.connect(config);
-        let carpetas = await pool.request().query("EXEC DBO.SPS_UNIVERSO_JUSTICIA '2019-01-01 00:00:00', '2019-12-31 23:59:59'");
+        let carpetas = await pool.request().query("EXEC sam.SPS_UNIVERSO_JUSTICIA '2019-01-01 00:00:00', '2019-12-31 23:59:59'");
         return carpetas.recordset;
     } catch (error) {
         console.log("Error de tipo: " + error);
@@ -24,7 +24,7 @@ async function getCarpetasInvestigacion2019() {
 async function getCarpetasInvestigacion2020() {
     try {
         let pool = await sql.connect(config);
-        let carpetas = await pool.request().query("EXEC DBO.SPS_UNIVERSO_JUSTICIA '2020-01-01 00:00:00', '2020-12-31 23:59:59'");
+        let carpetas = await pool.request().query("EXEC sam.SPS_UNIVERSO_JUSTICIA '2020-01-01 00:00:00', '2020-12-31 23:59:59'");
         return carpetas.recordset;
     } catch (error) {
         console.log("Error de tipo: " + error);
@@ -35,7 +35,7 @@ async function getCarpetasInvestigacion2020() {
 async function getCarpetasInvestigacion2021() {
     try {
         let pool = await sql.connect(config);
-        let carpetas = await pool.request().query("EXEC DBO.SPS_UNIVERSO_JUSTICIA '2021-01-01 00:00:00', '2021-12-31 23:59:59'");
+        let carpetas = await pool.request().query("EXEC sam.SPS_UNIVERSO_JUSTICIA '2021-01-01 00:00:00', '2021-12-31 23:59:59'");
         return carpetas.recordset;
     } catch (error) {
         console.log("Error de tipo: " + error);
@@ -46,7 +46,7 @@ async function getCarpetasInvestigacion2021() {
 async function getCarpetasInvestigacion2022() {
     try {
         let pool = await sql.connect(config);
-        let carpetas = await pool.request().query("EXEC DBO.SPS_UNIVERSO_JUSTICIA '2022-01-01 00:00:00', '2022-12-31 23:59:59'");
+        let carpetas = await pool.request().query("EXEC sam.SPS_UNIVERSO_JUSTICIA '2022-01-01 00:00:00', '2022-12-31 23:59:59'");
         return carpetas.recordset;
     } catch (error) {
         console.log("Error de tipo: " + error);

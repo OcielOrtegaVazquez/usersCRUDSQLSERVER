@@ -67,12 +67,15 @@ async function updateUser(user) {
             .input("username", sql.VarChar, user.username)
             .input("password", sql.VarChar, user.password)
             .input("nombre", sql.VarChar, user.nombre)
+            .input("activo", sql.Int, user.activo)
+            .input("titulo_profesional", sql.VarChar, user.titulo_profesional)
             .input("role", sql.VarChar, user.role)
             .input("u_admin", sql.VarChar, user.u_admin)
             .input("sede", sql.VarChar, user.sede)
             .input("subsede", sql.VarChar, user.subsede)
             .input("cargo", sql.VarChar, user.cargo)
-            .query("UPDATE sam.users SET username= @username, password= @password, nombre= @nombre, role= @role, u_admin= @u_admin, sede= @sede, subsede= @subsede, cargo= @cargo, modifyAt= getdate() WHERE id= @Id ");
+            .input("envio_correo", sql.VarChar, user.envio_correo)
+            .query("UPDATE sam.users SET username= @username, password= 'Usytem@Reveco.fgr.org', nombre= @nombre, activo= @activo, titulo_profesional= @titulo_profesional, role= @role, u_admin= @u_admin, sede= @sede, subsede= @subsede, cargo= @cargo, envio_correo= @envio_correo, modifyAt= getdate() WHERE id= @Id ");
         return updateUser.recordset;
     } catch (error) {
         console.log("Error de tipo: " + error);
@@ -85,7 +88,7 @@ async function deleteUser(userId) {
         let pool = await sql.connect(config);
         let deleteUser = await pool
             .request()
-            .input("userId", sql.Int, userId)
+            .input("userId", sql.VarChar, userId)
             .query("DELETE FROM sam.users WHERE id= @userId");
         return deleteUser.recordset;
     } catch (error) {
@@ -98,21 +101,10 @@ async function loginUser(user) {
     try {
         let pool = await sql.connect(config);
         let userLogin = await pool
-            .request().input("username", sql.VarChar, user.username)
+            .request()
+            .input("username", sql.VarChar, user.username)
             .input("password", sql.VarChar, user.password)
-            .query("SELECT username, password, role FROM sam.users WHERE username= @username AND password= @password"
-                /* , (error, rows, fields) => {
-                                if (!error) {
-                                    console.log("aqui");
-                                    console.log(rows);
-                                    let dataUser = JSON.stringify(rows);
-                                    const token = jwt.sign(dataUser, '@FgR@c0M@0rG@mX-Si3R!');
-                                    console.log(token);
-                                } else {
-                                    console.log(error);
-                                }
-                            } */
-            );
+            .query("SELECT id, username, password, role FROM sam.users WHERE username= @username AND password= @password");
         return userLogin.recordset;
     } catch (error) {
         console.log("Error de tipo: " + error);

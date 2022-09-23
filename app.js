@@ -10,13 +10,14 @@ var fs = require("fs"); //--> Crear directorio
 const PORT = 3000;
 var bodyParser = require("body-parser");
 const cors = require("cors");
-const jwt = require('jsonwebtoken');
+const jwt = require("jsonwebtoken");
 
 /* Importar DB */
 const dbuser = require("./controllers/dbUser");
-const dbCarpetaInvestigacion = require('./controllers/dbCarpetaInvestigacion');
+const dbCarpetaInvestigacion = require("./controllers/dbCarpetaInvestigacion");
 const dbCMI = require("./controllers/dbcmi");
 const dbCatalogos = require("./controllers/dbCatalogos");
+const viewsPFM = require("./controllers/viewsPFM");
 
 app.use(bodyParser.json());
 
@@ -87,7 +88,7 @@ function infoDB() {
 /* ------------------------------ */
 const configC = require("./config/config");
 const dbPlanInvestigacion = require("./controllers/dbPlanInvestigacion.js");
-const { getJerarquiaMP } = require("./controllers/dbPlanInvestigacion.js");
+const dbResumenCMI = require("./controllers/dbResumenCMI.js");
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 app.use(cors(configC.server));
@@ -113,23 +114,21 @@ app.set("key", config.key);
 /* ---------------------------- Ruta principal ----------------------------------- */
 app.use("/admin", router);
 
-
 /* ------------------------------------------------------------------------------- */
 /* ------------------------- Creacion de Rutas Users ----------------------------- */
 /* ------------------------------------------------------------------------------- */
 
-
 /* Obtenermos todos los usuarios */
-router.route("/users").get((req, res) => {
+router.route("/users", veryfyToken).get((req, res) => {
     dbuser.getUsers().then((users) => {
-        res.json({ users });
+        res.json(users);
     });
 });
 
 /* Obtenemos 1 usuario */
 router.route("/users/:id").get((req, res) => {
     dbuser.getUserId(req.params.id).then((user) => {
-        res.json({ user });
+        res.json(user);
     });
 });
 
@@ -138,7 +137,7 @@ router.route("/users").post((req, res) => {
     const insertUser = {...req.body };
     dbuser.insertUser(insertUser).then((user) => {
         res.setHeader("Content-Type", "application/json");
-        res.json({ user });
+        res.json(user);
     });
 });
 
@@ -146,14 +145,14 @@ router.route("/users").post((req, res) => {
 router.route("/update").put((req, res) => {
     const updateUser = {...req.body };
     dbuser.updateUser(updateUser).then((user) => {
-        res.json({ user });
+        res.json(user);
     });
 });
 
 /* Borrar Usuario */
 router.route("/users/:id").delete((req, res) => {
     dbuser.deleteUser(req.params.id).then((user) => {
-        res.json({ user });
+        res.json(user);
     });
 });
 
@@ -165,29 +164,36 @@ router.route("/users/login").post((req, res) => {
     dbuser.loginUser(userLogin).then((user) => {
         res.setHeader("Content-Type", "application/json");
         if (res) {
-            let dataUser = JSON.stringify(user);
-            //console.log("usuario base:  " + user[0].username);
-            //console.log("usuario role:  " + user[0].role);
-            const token = jwt.sign({ exp: Math.floor(Date.now() / 1000) + 60 * 60, data: dataUser }, '@FgR@c0M@0rG@mX-Si3R!');
-            res.json(token);
+            const token = jwt.sign({ exp: Math.floor(Date.now() / 1000) + 60 * 60, data: user },
+                "@FgR@c0M@0rG@mX-Si3R!"
+            );
+            res.json(user);
             console.log(token);
+            console.log(user);
         } else {
-            res.json('usuario incorrecto');
+            res.json("usuario incorrecto");
         }
     });
 });
 
+/* Verificar Token */
+function veryfyToken(req, res, next) {
+    if (!req.headers.authorization) return res.status(401).json("No autorizado");
+    const token = req.headers.authorization.substr(7);
+    if (token !== "") {
+        const content = jwt.verify(token, "@FgR@c0M@0rG@mX-Si3R!");
+        console.log("SI pasa");
+        console.log(content);
+        req.data = content;
+        next();
+    } else {
+        res.status(401).json("Token Vacio");
+    }
+}
 
 /* ------------------------------------------------------------------------------- */
 /* --------------- Creacion de Rutas Carpetas de Investigacion ------------------- */
 /* ------------------------------------------------------------------------------- */
-
-/* Obtenermos todos los usuarios */
-router.route("/users").get((req, res) => {
-    dbuser.getUsers().then((users) => {
-        res.json({ users });
-    });
-});
 
 /* Obtenemos todas las carpetas de investigacion del 2019 */
 router.route("/carpetas2019").get((req, res) => {
@@ -213,14 +219,13 @@ router.route("/carpetas2021").get((req, res) => {
 /* Obtenemos todas las carpetas de investigacion del 2022 */
 router.route("/carpetas2022").get((req, res) => {
     dbCarpetaInvestigacion.getCarpetasInvestigacion2022().then((carpetas2022) => {
-        res.json(carpetas2022)
+        res.json(carpetas2022);
     });
 });
 
 /* ------------------------------------------------------------------------------- */
 /* ------------------------------- Reportes CMI ---------------------------------- */
 /* ------------------------------------------------------------------------------- */
-
 
 /* ------------------------------- CENAPI ---------------------------------- */
 
@@ -238,10 +243,13 @@ router.route("/reporteCENAPI/rango").post((req, res) => {
     dbCMI.getReporteCenapi(rango).then((reporteCENAPIRango) => {
         res.setHeader("Content-Type", "application/json");
         res.json(reporteCENAPIRango);
-        console.log("Se Encontraron: " + reporteCENAPIRango.length + " Registros de CMI_CENAPI");
+        console.log(
+            "Se Encontraron: " +
+            reporteCENAPIRango.length +
+            " Registros de CMI_CENAPI"
+        );
     });
 });
-
 
 /* ------------------------------- CGSP ---------------------------------- */
 
@@ -259,10 +267,11 @@ router.route("/reporteCGSP/rango").post((req, res) => {
     dbCMI.getReporteCgsp(rango).then((reporteCGSPRango) => {
         res.setHeader("Content-Type", "application/json");
         res.json(reporteCGSPRango);
-        console.log("Se encontraron: " + reporteCGSPRango.length + " Registros de CMI_CGSP");
+        console.log(
+            "Se encontraron: " + reporteCGSPRango.length + " Registros de CMI_CGSP"
+        );
     });
 });
-
 
 /* ------------------------------- PFM_MM ---------------------------------- */
 
@@ -280,10 +289,13 @@ router.route("/reportePFM_MM/rango").post((req, res) => {
     dbCMI.getReportePFM_MM(rango).then((reportePFM_MMRango) => {
         res.setHeader("Content-Type", "application/json");
         res.json(reportePFM_MMRango);
-        console.log("Se encontraron: " + reportePFM_MMRango.length + " Registros de CMI_PFM_MM");
+        console.log(
+            "Se encontraron: " +
+            reportePFM_MMRango.length +
+            " Registros de CMI_PFM_MM"
+        );
     });
 });
-
 
 /* ------------------------------- PFM_MJ ---------------------------------- */
 
@@ -301,10 +313,11 @@ router.route("/reportePFM_MJ/rango").post((req, res) => {
     dbCMI.getReportePFM_MJ(rango).then((reportePFM_MJRango) => {
         res.setHeader("Content-Type", "application/json");
         res.json(reportePFM_MJRango);
-        console.log("Se encontraron: " + reportePFM_MJRango.length + " Registros de CMI_PF_MJ");
+        console.log(
+            "Se encontraron: " + reportePFM_MJRango.length + " Registros de CMI_PF_MJ"
+        );
     });
 });
-
 
 /* ------------------------------------------------------------------------------ */
 /* -------------------------------- CATALOGOS ----------------------------------- */
@@ -326,27 +339,30 @@ router.route("/catEstados").get((req, res) => {
     });
 });
 
-
 /* ------------------------------------------------------------------------------ */
 /* ------------------------- Planes de Investigacion ---------------------------- */
 /* ------------------------------------------------------------------------------ */
 
 /* Obtener todos planes de invetigacion */
 router.route("/planesInvestigacion").get((req, res) => {
-    dbPlanInvestigacion.getAllPlanesInvestigacion().then((planesInvestigacion) => {
-        res.setHeader("Content-Type", "application/json");
-        res.json(planesInvestigacion);
-    });
+    dbPlanInvestigacion
+        .getAllPlanesInvestigacion()
+        .then((planesInvestigacion) => {
+            res.setHeader("Content-Type", "application/json");
+            res.json(planesInvestigacion);
+        });
 });
 
 /* Obtener plan de investigacion por numero de carpeta */
 router.route("/planInvestigacion/carpeta").post((req, res) => {
     const numCarpeta = {...req.body };
-    dbPlanInvestigacion.getPlanInvestigacion(numCarpeta).then((planInvestigacion) => {
-        res.setHeader("Content-Type", "application/json");
-        res.json(planInvestigacion);
-        console.log(planInvestigacion);
-    });
+    dbPlanInvestigacion
+        .getPlanInvestigacion(numCarpeta)
+        .then((planInvestigacion) => {
+            res.setHeader("Content-Type", "application/json");
+            res.json(planInvestigacion);
+            console.log(planInvestigacion);
+        });
 });
 
 /* Obtener diligencias asignadad a carpeta */
@@ -365,4 +381,112 @@ router.route("/mpEstructura/:id").get((req, res) => {
         res.setHeader("Content-Type", "application/json");
         res.json(getJerarquiaMP);
     });
+});
+
+/* ------------------------------------------------------------------------------- */
+/* ---------------------- Creacion de Rutas Resumen CMI -------------------------- */
+/* ------------------------------------------------------------------------------- */
+
+/* Obtener el resumen de las tablas de CMI */
+router.route("/resumen-cmi").get((req, res) => {
+    dbResumenCMI.getAllResumenCMI().then((resumenCMI) => {
+        res.setHeader("Content-Type", "application/json");
+        res.json(resumenCMI);
+        console.log(resumenCMI);
+    });
+});
+
+/* Obtener el resumen de Tabla Valida Datos */
+router.route("/resumen-cmi-valida").get((req, res) => {
+    dbResumenCMI.getAllValidaTablaDatos().then((validaDatos) => {
+        res.setHeader("Content-Type", "application/json");
+        res.json(validaDatos);
+        console.log(validaDatos);
+    });
+});
+
+/* --------------------------------------------------------------------------------------- */
+/* ---------------------- Creacion de Rutas DESCARGA VISTAS PFM -------------------------- */
+/* --------------------------------------------------------------------------------------- */
+
+/* Descargar Vista CENAPI */
+router.route("/descargaCENAPI").get((req, res) => {
+    viewsPFM.getCENAPITable().then((resumenCENAPI) => {
+        res.setHeader("Content-Type", "application/json");
+        res.send({
+            message: "Descargando Base CENAPI, tiempo aproximado 1:45 min ...",
+        });
+    });
+});
+
+/* Descargar Vista CGSP */
+router.route("/descargaCGSP").get((req, res) => {
+    viewsPFM.getCGSPTable().then((resumenCGSP) => {
+        res.setHeader("Content-Type", "application/json");
+        res.send({
+            message: "Descargando Base CGSP, tiempo aproximado 3:50 min ...",
+        });
+    });
+});
+
+/* Descargar Vista PFM_MJ */
+router.route("/descargaPFM_MJ").get((req, res) => {
+    viewsPFM.getPFM_MJTable().then((resumenPFM_MJ) => {
+        res.setHeader("Content-Type", "application/json");
+        res.send({
+            message: "Descargando Base PFM_MJ, tiempo aproximado 1:45 min ...",
+        });
+    });
+});
+
+/* Descargar Vista PFM_MM */
+router.route("/descargaPFM_MM").get((req, res) => {
+    viewsPFM.getPFM_MMTable().then((resumenPFM_MM) => {
+        res.setHeader("Content-Type", "application/json");
+        res.send({
+            message: "Descargando Base PFM_MM, tiempo aproximado 7:45 min ...",
+        });
+    });
+});
+
+/* Insertar Archivos Descargados de Vistas dePFM */
+
+/* Insertar CENAPI */
+router.route("/insertPFM_CENAPI").get((req, res) => {
+    viewsPFM.insertRegistrosPFM_CENAPI().then((insertRegistrosPFM_CENAPI) => {
+        res.setHeader("Content-Type", "application/json");
+        res.json(insertRegistrosPFM_CENAPI);
+    });
+});
+
+/* Insertar CGSP */
+router.route("/insertPFM_CGSP").get((req, res) => {
+    viewsPFM.insertRegistrosPFM_CGSP().then((insertRegistrosPFM_CGSP) => {
+        res.setHeader("Content-Type", "application/json");
+        res.json(insertRegistrosPFM_CGSP);
+    });
+});
+
+/* Insertar PFM_MJ */
+router.route("/insertPFM_MJ").get((req, res) => {
+    viewsPFM.insertRegistrosPFM_MJ().then((insertRegistrosPFM_MJ) => {
+        res.setHeader("Content-Type", "application/json");
+        res.json(insertRegistrosPFM_MJ)
+    });
+});
+
+/* Insertar PFM_MM */
+router.route("/insertPFM_MM").get((req, res) => {
+    viewsPFM.insertRegistrosPFM_MM().then((insertRegistrosPFM_MM) => {
+        res.setHeader("Content-Type", "application/json");
+        res.json(insertRegistrosPFM_MM);
+    })
+});
+
+/* HISTORICO VISTAS PFM-AIC */
+router.route("/historico_pfm").get((req, res) => {
+    viewsPFM.historicoPFM().then((historicoPFM) => {
+        res.setHeader("Content-Type", "application/json");
+        res.json(historicoPFM);
+    })
 });
