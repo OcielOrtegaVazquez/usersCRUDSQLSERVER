@@ -89,6 +89,13 @@ function infoDB() {
 const configC = require("./config/config");
 const dbPlanInvestigacion = require("./controllers/dbPlanInvestigacion.js");
 const dbResumenCMI = require("./controllers/dbResumenCMI.js");
+const {
+    totalRegistros,
+    getTotalesPFMhistorico,
+} = require("./controllers/viewsPFM");
+const { Router } = require("express");
+const dbAdministativo = require("./controllers/dbAdministrativo.js");
+const { deleteVacacionesByUser } = require("./controllers/dbAdministrativo.js");
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 app.use(cors(configC.server));
@@ -471,7 +478,7 @@ router.route("/insertPFM_CGSP").get((req, res) => {
 router.route("/insertPFM_MJ").get((req, res) => {
     viewsPFM.insertRegistrosPFM_MJ().then((insertRegistrosPFM_MJ) => {
         res.setHeader("Content-Type", "application/json");
-        res.json(insertRegistrosPFM_MJ)
+        res.json(insertRegistrosPFM_MJ);
     });
 });
 
@@ -480,13 +487,188 @@ router.route("/insertPFM_MM").get((req, res) => {
     viewsPFM.insertRegistrosPFM_MM().then((insertRegistrosPFM_MM) => {
         res.setHeader("Content-Type", "application/json");
         res.json(insertRegistrosPFM_MM);
-    })
+    });
 });
 
-/* HISTORICO VISTAS PFM-AIC */
-router.route("/historico_pfm").get((req, res) => {
-    viewsPFM.historicoPFM().then((historicoPFM) => {
+/* Desacarga y Carga de Bitacora PFM-SIER */
+router.route("/historico-pfm").get((req, res) => {
+    viewsPFM.getTotalesPFMhistorico().then((getTotalesPFMhistorico) => {
         res.setHeader("Content-Type", "application/json");
-        res.json(historicoPFM);
-    })
+        res.json(getTotalesPFMhistorico);
+    });
+});
+
+/* CONTEO REGISTROS EXISTENTES BASE COPLADII-PFM */
+router.route("/conteo_pfm").get((req, res) => {
+    viewsPFM.totalRegistros().then((totalRegistros) => {
+        res.setHeader("Content-Type", "application/json");
+        res.json(totalRegistros);
+    });
+});
+
+/* OBTENER REPORTES TRIMESTRALES CMI */
+
+/* CENAPI */
+
+router.route("/trimestres-cenapi").get((req, res) => {
+    dbCMI.getAllTrimestresCENAPI().then((getAllTrimestresCENAPI) => {
+        res.setHeader("Content-Type", "application/json");
+        res.json(getAllTrimestresCENAPI);
+    });
+});
+
+router.route("/trimestre-cenapi/trimestre").post((req, res) => {
+    const trimestre = {...req.body };
+    dbCMI.getTrimestreCENAPI(trimestre).then((getTrimestreCENAPI) => {
+        res.setHeader("Content-Type", "application/json");
+        res.json(getTrimestreCENAPI);
+        console.log(
+            "Se Encontraron: " +
+            getTrimestreCENAPI.length +
+            " registros trimestrales de CENAPI"
+        );
+    });
+});
+
+/* CGSP */
+
+router.route("/trimestres-cgsp").get((req, res) => {
+    dbCMI.getAllTrimestresCGSP().then((getAllTrimestresCGSP) => {
+        res.setHeader("Content-Type", "application/json");
+        res.json(getAllTrimestresCGSP);
+    });
+});
+
+router.route("/trimestre-cgsp/trimestre").post((req, res) => {
+    const trimestre = {...req.body };
+    dbCMI.getTrimestreCGSP(trimestre).then((getTrimestreCGSP) => {
+        res.setHeader("Content-Type", "application/json");
+        res.json(getTrimestreCGSP);
+        console.log(
+            "Se Encontraron: " +
+            getTrimestreCGSP.length +
+            " registros trimestrales de CGSP"
+        );
+    });
+});
+
+/* PFM_MJ */
+
+router.route("/trimestres-pfm_mj").get((req, res) => {
+    dbCMI.getAllTrimestresPFM_MJ.then((getAllTrimestresPFM_MJ) => {
+        res.setHeader("Content-Type", "application/json");
+        res.json(getAllTrimestresPFM_MJ);
+    });
+});
+
+router.route("/trimestre-pfm_mj/trimestre").post((req, res) => {
+    const trimestre = {...req.body };
+    dbCMI.getTrimestrePFM_MJ(trimestre).then((getTrimestrePFM_MJ) => {
+        res.setHeader("Content-Type", "application/json");
+        res.json(getTrimestrePFM_MJ);
+        console.log(
+            "Se encontraron: " +
+            getTrimestrePFM_MJ.length +
+            " registros trimestrales de PFM_MJ"
+        );
+    });
+});
+
+/* PFM_MM */
+
+router.route("/trimestres-pfm_mm").get((req, res) => {
+    dbCMI.getAllTrimestresPFM_MM.then((getAllTrimestresPFM_MM) => {
+        res.setHeader("Content-Type", "application/json");
+        res.json(getAllTrimestresPFM_MM);
+    });
+});
+
+router.route("/trimestre-pfm_mm/trimestre").post((req, res) => {
+    const trimestre = {...req.body };
+    dbCMI.getTrimestrePFM_MM(trimestre).then((getTrimestrePFM_MM) => {
+        res.setHeader("Content-Type", "application/json");
+        res.json(getTrimestrePFM_MM);
+        console.log(
+            "Se encontraron: " +
+            getTrimestrePFM_MM.length +
+            " registros trimestrales de PFM_MM"
+        );
+    });
+});
+
+/* --------------- Administrativo Vacaciones ------------------------- */
+
+/* Obtener Todos los registros */
+router.route("/vacaciones").get((req, res) => {
+    dbAdministativo.getAllVacaciones().then((getAllVacaciones) => {
+        res.setHeader("Content-Type", "application/json");
+        res.json(getAllVacaciones);
+    });
+});
+
+/* Obtener 1 registro de vacaciones By Id */
+router.route("/vacaciones/number/:id").get((req, res) => {
+    dbAdministativo.getRegistroById(req.params.id).then((getRegistroById) => {
+        res.setHeader("Content-Type", "application/json");
+        res.json(getRegistroById);
+    });
+});
+
+
+/* Insertar Vacaciones */
+router.route("/vacaciones/agregar").post((req, res) => {
+    const vacaciones = {...req.body };
+    dbAdministativo.postVacaciones(vacaciones).then((postVacaciones) => {
+        res.setHeader("Content-Type", "application/json");
+        res.json(postVacaciones);
+    });
+});
+
+/* Obtener Vacaciones De un usuario */
+router.route("/vacaciones/usuario").post((req, res) => {
+    const vacacionesByUser = {...req.body };
+    dbAdministativo.getVacacionesByUser(vacacionesByUser).then((getVacacionesByUser) => {
+        res.setHeader("Content-Type", "application/json");
+        res.json(getVacacionesByUser);
+    });
+});
+
+/* Borrar 1 registro de vacaciones */
+router.route("/vacaciones/:id").delete((req, res) => {
+    dbAdministativo.deleteVacacionesByUser(req.params.id).then((deleteVacacionesByUser) => {
+        res.setHeader("Content-Type", "application/json");
+        res.json(deleteVacacionesByUser);
+    });
+});
+
+/* Obtener Todos los registros Para Grafica */
+router.route("/vacaciones/grafica").get((req, res) => {
+    dbAdministativo.getVacacionesGrafica().then((getVacacionesGrafica) => {
+        res.setHeader("Content-Type", "application/json");
+        res.json(getVacacionesGrafica);
+    });
+});
+
+/* Obtener Todos los registros Para Grafica Fecha Inicial*/
+router.route("/vacaciones/grafica/fecha-inicial").get((req, res) => {
+    dbAdministativo.getFechaInicialVacaciones().then((getFechaInicialVacaciones) => {
+        res.setHeader("Content-Type", "application/json");
+        res.json(getFechaInicialVacaciones);
+    });
+});
+
+/* Obtener Todos los registros Para Grafica Fecha Fecha Final*/
+router.route("/vacaciones/grafica/fecha-final").get((req, res) => {
+    dbAdministativo.getFechaFinalVacaciones().then((getFechaFinalVacaciones) => {
+        res.setHeader("Content-Type", "application/json");
+        res.json(getFechaFinalVacaciones);
+    });
+});
+
+/* Obtener Todos los registros Para Grafica Rango*/
+router.route("/vacaciones/grafica/rango").get((req, res) => {
+    dbAdministativo.getRangoVacaciones().then((getRangoVacaciones) => {
+        res.setHeader("Content-Type", "application/json");
+        res.json(getRangoVacaciones);
+    });
 });

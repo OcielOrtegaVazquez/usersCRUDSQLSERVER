@@ -1,0 +1,1 @@
+TRUNCATE TABLE [sam].[BitacoraSIER_BCP]

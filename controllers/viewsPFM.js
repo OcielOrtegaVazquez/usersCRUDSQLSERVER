@@ -35,6 +35,30 @@ async function getCENAPITable() {
     } catch (error) {
         console.log("Error de tipo: " + error);
     }
+}
+
+/* Conteo, descarga y carga de registros de CENAPI  base de PFM */
+async function getTotalesPFMhistorico() {
+
+    const { spawn } = require('child_process');
+    const bat = spawn("historico_pfm.bat", ["/c", "SIGERTM"]);
+
+    try {
+        bat.stdout.on("data", (data) => {
+            console.log(data.toString());
+        });
+
+        bat.stderr.on("data", async(data) => {
+            console.error(data.toString());
+        });
+
+        bat.on("exit", (code) => {
+            console.log(`Child exited with code ${code}`);
+        });
+
+    } catch (error) {
+        console.log("Error de tipo: " + error);
+    }
 
 }
 
@@ -170,6 +194,17 @@ async function historicoPFM() {
     }
 }
 
+/* Conteo de Registros Base Copladii */
+async function totalRegistros() {
+    try {
+        let pool = await sql.connect(config);
+        let totalRegistros = await pool.request().query("SELECT * FROM [sam].[BitacoraSIER_BCP] ORDER BY Fecha DESC");
+        return totalRegistros.recordset;
+    } catch (error) {
+        console.log("Error de tipo: " + error);
+    }
+}
+
 module.exports = {
     getCENAPITable: getCENAPITable,
     getCGSPTable: getCGSPTable,
@@ -179,5 +214,7 @@ module.exports = {
     insertRegistrosPFM_CGSP: insertRegistrosPFM_CGSP,
     insertRegistrosPFM_MJ: insertRegistrosPFM_MJ,
     insertRegistrosPFM_MM: insertRegistrosPFM_MM,
-    historicoPFM: historicoPFM
+    historicoPFM: historicoPFM,
+    totalRegistros: totalRegistros,
+    getTotalesPFMhistorico: getTotalesPFMhistorico
 }
